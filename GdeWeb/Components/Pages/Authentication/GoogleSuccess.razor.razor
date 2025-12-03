@@ -1,0 +1,28 @@
+﻿<h3>GoogleSuccess.razor</h3>
+
+@page "/google-success"
+
+@inject NavigationManager Nav
+@inject GdeWeb.Services.CustomAuthentication Auth
+
+<h3>Bejelentkezés folyamatban...</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        var token = query["token"];
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            await Auth.MarkUserAsAuthenticated(token);
+            Nav.NavigateTo("/", true);
+        }
+        else
+        {
+            Nav.NavigateTo("/authentication/signin", true);
+        }
+    }
+}

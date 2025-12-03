@@ -1,0 +1,59 @@
+﻿@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="user-profile">
+    @if (IsLoaded && IsAuthenticated)
+    {
+        <div class="user-info">
+            @if (!string.IsNullOrEmpty(PictureUrl))
+            {
+                <img src="@PictureUrl" alt="Profilkép"
+                     style="width:64px;height:64px;border-radius:50%;object-fit:cover;" />
+            }
+            <div>
+                <div><strong>@FullName</strong></div>
+                <div>@Email</div>
+            </div>
+        </div>
+    }
+    else if (IsLoaded)
+    {
+        <p>Nincs bejelentkezett felhasználó.</p>
+    }
+    else
+    {
+        <p>Betöltés...</p>
+    }
+</div>
+
+@code {
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
+    public string? PictureUrl { get; set; }
+
+    public bool IsAuthenticated { get; set; }
+    public bool IsLoaded { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+
+        IsAuthenticated = user.Identity?.IsAuthenticated ?? false;
+        IsLoaded = true;
+
+        if (!IsAuthenticated)
+            return;
+
+        // Ezeket a claimeket a CustomAuthentication.GetClaimsIdentity tölti:
+        var firstName = user.FindFirst(c => c.Type == ClaimTypes.Name)?.Value;
+        var lastName = user.FindFirst(c => c.Type == ClaimTypes.GivenName)?.Value;
+        Email = user.FindFirst(c => c.Type == ClaimTypes.Email)?.Value;
+
+        FullName = $"{firstName} {lastName}".Trim();
+
+        // Ha később beteszel "picture" claimet, itt automatikusan működni fog:
+        PictureUrl = user.FindFirst(c => c.Type == "picture")?.Value;
+    }
+}
